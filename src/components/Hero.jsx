@@ -1,5 +1,5 @@
 import { hero } from '../data/content';
-import { site, formatPrice } from '../data/site';
+import { site } from '../data/site';
 import { EnrollButton } from './Access';
 import { Backdrop, Button, Seal } from './ui';
 
@@ -52,7 +52,6 @@ export default function Hero() {
             <span className="font-semibold text-espreso">Upis za {site.cohort}</span>
             <span aria-hidden="true" className="text-zalfija">•</span>
             <span>Ograničen broj mesta</span>
-            <span>({formatPrice(site.price.current)} uz promotivni period)</span>
           </p>
         </div>
 
