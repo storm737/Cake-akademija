@@ -142,6 +142,8 @@ function VideoPlayer({ lesson, hasAccess, onLocked }) {
   // U celom ekranu snimak popunjava ceo ekran (bez crnih traka); dugme dozvoljava prikaz celog kadra
   const [fill, setFill] = useState(true);
   const stageRef = useRef(null);
+  const playRef = useRef(null);
+  const wasFull = useRef(false);
   const state = lessonState(lesson, hasAccess);
   const urls = state === 'playable' ? videoList(lesson) : [];
   const player = urls.length ? toPlayer(urls[Math.min(part, urls.length - 1)]) : null;
@@ -163,16 +165,13 @@ function VideoPlayer({ lesson, hasAccess, onLocked }) {
     setFull(true);
     // Mora u istom kliku: pregledač dozvoljava ceo ekran samo kao odgovor na dodir/klik
     Promise.resolve(requestFs(stageRef.current)).catch(() => {});
-    // Na telefonu se ekran zaključava u pravcu snimka (uspravan ili položen), gde je podržano
-    try {
-      Promise.resolve(screen.orientation?.lock?.(ratio < 1 ? 'portrait' : 'landscape')).catch(() => {});
-    } catch {
-      /* nije podržano */
-    }
   };
 
+  // Izlaz vraća plejer na početak (naslovna slika i „Pusti“). Video se zaustavlja, a svako sledeće
+  // puštanje kreće isto kao prvo; mali crn okvir koji ne reaguje ne ostaje.
   const exitFull = () => {
     setFull(false);
+    setStarted(false);
     if (fsElement()) Promise.resolve(exitFs()).catch(() => {});
     try {
       screen.orientation?.unlock?.();
@@ -195,7 +194,17 @@ function VideoPlayer({ lesson, hasAccess, onLocked }) {
   // Izlaz iz pravog celog ekrana (Esc, gest nazad) zatvara i naše prekrivanje
   useEffect(() => {
     const onChange = () => {
-      if (!fsElement()) setFull(false);
+      if (fsElement()) {
+        // Pravac ekrana (uspravan/položen snimak) može da se zaključa tek kad je ceo ekran zaista uključen
+        try {
+          Promise.resolve(screen.orientation?.lock?.(ratio < 1 ? 'portrait' : 'landscape')).catch(() => {});
+        } catch {
+          /* nije podržano */
+        }
+      } else {
+        setFull(false);
+        setStarted(false);
+      }
     };
     document.addEventListener('fullscreenchange', onChange);
     document.addEventListener('webkitfullscreenchange', onChange);
@@ -205,6 +214,12 @@ function VideoPlayer({ lesson, hasAccess, onLocked }) {
       if (fsElement()) Promise.resolve(exitFs()).catch(() => {});
     };
   }, []);
+
+  // Posle izlaza fokus se vraća na „Pusti“ (tastatura i čitači ekrana ne ostaju bez mesta)
+  useEffect(() => {
+    if (wasFull.current && !full) playRef.current?.focus({ preventScroll: true });
+    wasFull.current = full;
+  }, [full]);
 
   // Dok je ceo ekran uključen: Esc izlazi, a stranica iza se ne skroluje
   useEffect(() => {
@@ -296,6 +311,7 @@ function VideoPlayer({ lesson, hasAccess, onLocked }) {
               {player ? (
                 <button
                   type="button"
+                  ref={playRef}
                   onClick={play}
                   className="group absolute inset-0 grid place-items-center"
                   aria-label={`Pusti lekciju: ${lesson.title}`}
