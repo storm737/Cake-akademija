@@ -12,7 +12,7 @@ export const site = {
   // Adresa sajta kada bude objavljen, npr. 'https://www.tvojdomen.rs' (bez kose crte na kraju).
   // Koristi se za SEO: kanonski link, slika za deljenje, robots.txt i sitemap.xml.
   // Dok je prazno, ove oznake se ne prave. Može i pri izradi: SITE_URL=https://... npm run build
-  url: '',
+  url: 'https://coolcakeakademija.com',
 
   // SEO: naslov (do ~60 znakova) i opis (do ~160) koje pretraga prikazuje, tekst za deljenje na
   // društvenim mrežama i slika za deljenje (1200×630, fajl u public/assets)

@@ -1,5 +1,4 @@
 import { offer, modules, rights } from '../data/content';
-import { lessons } from '../data/lessons';
 import { site, formatPrice } from '../data/site';
 import { useAccess } from '../lib/access';
 import { EnrollButton, UnlockLink } from './Access';
@@ -17,7 +16,7 @@ export default function Pricing() {
 
   const terms = [
     { label: 'Format', value: 'Potpuno online' },
-    { label: 'Program', value: `${modules.length} modula · ${lessons.length} video lekcija` },
+    { label: 'Program', value: `${modules.length} modula` },
     { label: 'Tempo', value: 'Svojim tempom, iz svog doma' },
     { label: 'Pristup', value: site.access },
     { label: 'Autorska prava', value: rights.pricing },
@@ -67,21 +66,7 @@ export default function Pricing() {
             <div className="relative flex flex-col overflow-hidden border-t border-okvir bg-puter lg:col-span-5 lg:border-t-0 lg:border-l">
               <Backdrop src="/assets/pozadine/cokoladni-volani-1080.webp" fade="puter" position="object-[50%_30%]" />
               <div className="relative flex flex-1 flex-col p-6 sm:p-10 lg:p-12">
-              <p className="w-fit bg-bobica-tamna px-3 py-2 text-[0.72rem] leading-none font-semibold tracking-[0.18em] text-vanila uppercase">
-                Prva generacija
-              </p>
-
-              <p className="mt-9 text-sm text-kakao">{site.price.label}</p>
-              <p className="mt-2 font-display text-[clamp(4.5rem,3rem+4.5vw,6.5rem)] leading-[0.85] brojke">
-                {site.price.current}
-                <span className="ml-2 kurziv text-[0.45em] text-bobica">{site.price.currency}</span>
-              </p>
-              <p className="mt-5 text-kakao">
-                Redovna cena je{' '}
-                <span className="line-through decoration-bobica-tamna/70 decoration-1">{formatPrice(site.price.regular)}</span>
-              </p>
-
-              <dl className="mt-8 divide-y divide-okvir border-y border-okvir text-[0.95rem]">
+              <dl className="divide-y divide-okvir border-b border-okvir text-[0.95rem]">
                 {terms.map((t) => (
                   <div key={t.label} className="flex justify-between gap-6 py-3.5">
                     <dt className="text-kakao">{t.label}</dt>
@@ -89,6 +74,22 @@ export default function Pricing() {
                   </div>
                 ))}
               </dl>
+
+              <div className="mt-10">
+                <p className="w-fit bg-bobica-tamna px-3 py-2 text-[0.72rem] leading-none font-semibold tracking-[0.18em] text-vanila uppercase">
+                  Prva generacija
+                </p>
+
+                <p className="mt-6 text-sm text-kakao">{site.price.label}</p>
+                <p className="mt-2 font-display text-[clamp(4.5rem,3rem+4.5vw,6.5rem)] leading-[0.85] brojke">
+                  {site.price.current}
+                  <span className="ml-2 kurziv text-[0.45em] text-bobica">{site.price.currency}</span>
+                </p>
+                <p className="mt-5 text-kakao">
+                  Redovna cena je{' '}
+                  <span className="line-through decoration-bobica-tamna/70 decoration-1">{formatPrice(site.price.regular)}</span>
+                </p>
+              </div>
 
               <div className="mt-8 lg:mt-auto lg:pt-10">
                 {hasAccess ? (

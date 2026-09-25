@@ -25,7 +25,7 @@ export default function Gallery() {
             </h2>
           </div>
           <p className="self-end text-kakao text-pretty lg:col-span-5">
-            Torte Cool Cakes by Maja — od nežnih svadbenih spratova do razigranih dečjih torti. Klikni na fotografiju
+            Torte Cool Cakes by Maja — od nežnih svadbenih spratova do razigranih dečijih torti. Klikni na fotografiju
             za uvećan prikaz.
           </p>
         </div>
