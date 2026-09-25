@@ -1,0 +1,218 @@
+@import "tailwindcss";
+
+@theme {
+  /* Podloge: mascarpone, topli lan i papir za paspartu */
+  --color-vanila: #FAF6F0;
+  --color-krem: #FDFAF5;
+  --color-puter: #F5EFEB;
+
+  /* Linije i okviri */
+  --color-lan: #EDE3D8;
+  --color-okvir: #E4D5C5;
+  --color-lan-tamni: #D8C6B4;
+
+  /* Mastilo: tamno pečeni kakao */
+  --color-espreso: #24140E;
+  --color-espreso-svetli: #3A2319;
+  --color-kakao: #634B40;
+
+  /* Primarni akcenat: baršunasta bobica (dugmad, aktivni tabovi, navodnici, kurziv) */
+  --color-bobica: #9B4456;
+  --color-bobica-tamna: #8A3546;
+  --color-bobica-svetla: #EBCFD2;
+  --color-bobica-noc: #34161D;
+
+  /* Sekundarni akcenat: med i glazirana kajsija (ukrasi, bedževi, sjaj).
+     karamel i med su samo ukrasni; tekst u tonu meda koristi karamel-tamni */
+  --color-karamel: #D9824B;
+  --color-karamel-tamni: #9E5327;
+  --color-med: #E5A16F;
+  --color-med-svetli: #F2D6BC;
+
+  /* Tercijarni akcenat: prigušena pistaća / žalfija — štedljivo (štikle, poverenje) */
+  --color-zalfija: #6E7F6B;
+  --color-zalfija-svetla: #859682;
+  --color-zalfija-tamna: #55644F;
+  --color-zalfija-magla: #EDEFE6;
+
+  --font-display: "Playfair Display", ui-serif, Georgia, serif;
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+
+  --shadow-otisak: 0 36px 60px -42px rgb(110 52 40 / 0.4), 0 2px 4px -2px rgb(74 40 30 / 0.07);
+
+  --ease-meko: cubic-bezier(0.22, 0.7, 0.2, 1);
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+  html:has(dialog[open]) {
+    overflow: hidden;
+  }
+  body {
+    background: var(--color-vanila);
+    color: var(--color-espreso);
+    font-family: var(--font-sans);
+    font-size: 1.0625rem;
+    line-height: 1.7;
+    letter-spacing: 0.005em;
+    word-spacing: 0.03em;
+    overflow-x: clip;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  /* Zrno platna preko cele stranice */
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 35;
+    pointer-events: none;
+    opacity: 0.5;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='z'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .14 0 0 0 0 .08 0 0 0 0 .05 0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23z)'/%3E%3C/svg%3E");
+  }
+  section[id] {
+    scroll-margin-top: 4.5rem;
+  }
+  ::selection {
+    background: var(--color-med);
+    color: var(--color-espreso);
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-bobica);
+    outline-offset: 3px;
+  }
+  img {
+    max-width: 100%;
+  }
+}
+
+/* Naslovni font: Playfair Display, visok kontrast */
+@utility font-display {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: -0.018em;
+  font-feature-settings: "kern", "liga";
+}
+@utility kurziv {
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+@utility brojke {
+  font-variant-numeric: lining-nums tabular-nums;
+}
+@utility wrap {
+  width: 100%;
+  max-width: 78rem;
+  margin-inline: auto;
+  padding-inline: 1.25rem;
+  @media (width >= 40rem) {
+    padding-inline: 2rem;
+  }
+}
+@utility eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--color-karamel-tamni);
+  &::before {
+    content: "";
+    width: 1.75rem;
+    height: 1px;
+    background: var(--color-karamel);
+  }
+}
+@utility text-hero {
+  font-size: clamp(3rem, 1.35rem + 5.9vw, 6.5rem);
+  line-height: 0.98;
+}
+@utility text-naslov {
+  font-size: clamp(2.25rem, 1.35rem + 3.1vw, 4.15rem);
+  line-height: 1.05;
+}
+@utility text-podnaslov {
+  font-size: clamp(1.45rem, 1.12rem + 1.05vw, 2.05rem);
+  line-height: 1.22;
+}
+
+/* Topli ambijentalni sjaj iza ključnih elemenata */
+@utility sjaj {
+  position: absolute;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, rgb(217 130 75 / 0.15) 0%, rgb(155 68 86 / 0.08) 50%, transparent 80%);
+}
+@utility sjaj-tamni {
+  position: absolute;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, rgb(229 161 111 / 0.16) 0%, rgb(155 68 86 / 0.14) 50%, transparent 80%);
+}
+
+/* Ulazna animacija */
+@keyframes izroni {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+@utility izroni {
+  animation: izroni 0.9s var(--ease-meko) both;
+}
+
+/* Pečat koji se polako okreće */
+@keyframes okret {
+  to { transform: rotate(360deg); }
+}
+@utility okret {
+  animation: okret 40s linear infinite;
+  transform-origin: 50% 50%;
+}
+
+/* Torta koja se gradi kroz module */
+.torta-korak {
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.55s ease, transform 0.7s var(--ease-meko);
+}
+.torta-korak[data-on="true"] {
+  opacity: 1;
+  transform: none;
+}
+.torta-korak .crtez {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  transition: stroke-dashoffset 1s var(--ease-meko) 0.1s;
+}
+.torta-korak[data-on="true"] .crtez {
+  stroke-dashoffset: 0;
+}
+
+/* Dijalozi */
+dialog::backdrop {
+  background: transparent;
+}
+dialog.modal-lekcija::backdrop {
+  background: rgb(38 28 22 / 0.55);
+  backdrop-filter: blur(3px);
+}
+dialog[open].modal-lekcija {
+  animation: izroni 0.35s var(--ease-meko) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+  }
+}
