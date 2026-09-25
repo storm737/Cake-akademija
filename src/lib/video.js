@@ -16,12 +16,11 @@ const youtube = (id) => ({
   src: `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0&modestbranding=1`,
 });
 
-// Google Drive ne podržava automatsko puštanje, pa se njegov plejer prikazuje odmah.
+// Google Drive ne podržava automatsko puštanje: posle našeg „Pusti“ korisnik dodirne i njegovo dugme.
 // shield: Drive u uglu plejera ima dugme „otvori u novom prozoru“ koje otkriva link videa, pa se prekriva.
 const googleDrive = (id) => ({
   kind: 'iframe',
   src: `https://drive.google.com/file/d/${id}/preview`,
-  autoplay: false,
   shield: true,
 });
 

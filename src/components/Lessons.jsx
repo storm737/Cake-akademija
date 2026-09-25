@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { rights } from '../data/content';
 import { introVideo, lessons } from '../data/lessons';
 import { lessonState, toPlayer, videoList } from '../lib/video';
@@ -128,88 +128,214 @@ export default function Lessons() {
   );
 }
 
+// Pravi ceo ekran (Fullscreen API, uz Safari prefiks). Na iPhone-u ga nema za obične elemente,
+// pa plejer tada ostaje da prekriva ceo prozor (vidi `full` u VideoPlayer).
+const fsElement = () => document.fullscreenElement || document.webkitFullscreenElement || null;
+const requestFs = (el) => (el?.requestFullscreen || el?.webkitRequestFullscreen)?.call(el);
+const exitFs = () => (document.exitFullscreen || document.webkitExitFullscreen)?.call(document);
+
 function VideoPlayer({ lesson, hasAccess, onLocked }) {
   const [part, setPart] = useState(0);
   const [started, setStarted] = useState(false);
+  // Puštena lekcija odmah ide preko celog ekrana
+  const [full, setFull] = useState(false);
+  // U celom ekranu snimak popunjava ceo ekran (bez crnih traka); dugme dozvoljava prikaz celog kadra
+  const [fill, setFill] = useState(true);
+  const stageRef = useRef(null);
   const state = lessonState(lesson, hasAccess);
   const urls = state === 'playable' ? videoList(lesson) : [];
   const player = urls.length ? toPlayer(urls[Math.min(part, urls.length - 1)]) : null;
-  // Plejeri bez automatskog puštanja (Google Drive) prikazuju se odmah, bez naše naslovne slike
-  const playing = Boolean(player) && (started || player.autoplay === false);
+  // Video (i Google Drive) se učitava tek kad se pusti, pa je klik na „Pusti“ i ulaz u ceo ekran
+  const playing = Boolean(player) && started;
+  // Odnos širine i visine snimka (uspravan 9 / 16, položen 16 / 9); podešava se u lessons.js
+  const ratio = lesson.ratio ?? 16 / 9;
+  const cover = full && fill;
+  // Okvir plejera u popunjenom prikazu: oblik snimka, dovoljno velik da prekrije ekran. Višak širine se
+  // odseca uglavnom sa desne strane (do 4rem), gde Drive ima svoje dugme, pa ono ostaje van ekrana.
+  const overX = `max(0px, calc(100cqh * ${ratio} - 100cqw))`;
+  const coverBox = {
+    width: `max(100cqw, calc(100cqh * ${ratio}))`,
+    height: `max(100cqh, calc(100cqw / ${ratio}))`,
+    transform: `translate(calc(-50% + clamp(0px, min(${overX}, 4rem) - ${overX} / 2, ${overX} / 2)), -50%)`,
+  };
+
+  const enterFull = () => {
+    setFull(true);
+    // Mora u istom kliku: pregledač dozvoljava ceo ekran samo kao odgovor na dodir/klik
+    Promise.resolve(requestFs(stageRef.current)).catch(() => {});
+    // Na telefonu se ekran zaključava u pravcu snimka (uspravan ili položen), gde je podržano
+    try {
+      Promise.resolve(screen.orientation?.lock?.(ratio < 1 ? 'portrait' : 'landscape')).catch(() => {});
+    } catch {
+      /* nije podržano */
+    }
+  };
+
+  const exitFull = () => {
+    setFull(false);
+    if (fsElement()) Promise.resolve(exitFs()).catch(() => {});
+    try {
+      screen.orientation?.unlock?.();
+    } catch {
+      /* nije podržano */
+    }
+  };
+
+  const play = () => {
+    setStarted(true);
+    enterFull();
+  };
 
   const choosePart = (i) => {
     setPart(i);
     setStarted(true);
+    if (!full) enterFull();
   };
+
+  // Izlaz iz pravog celog ekrana (Esc, gest nazad) zatvara i naše prekrivanje
+  useEffect(() => {
+    const onChange = () => {
+      if (!fsElement()) setFull(false);
+    };
+    document.addEventListener('fullscreenchange', onChange);
+    document.addEventListener('webkitfullscreenchange', onChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', onChange);
+      document.removeEventListener('webkitfullscreenchange', onChange);
+      if (fsElement()) Promise.resolve(exitFs()).catch(() => {});
+    };
+  }, []);
+
+  // Dok je ceo ekran uključen: Esc izlazi, a stranica iza se ne skroluje
+  useEffect(() => {
+    if (!full) return undefined;
+    const onKey = (e) => {
+      if (e.key === 'Escape') exitFull();
+    };
+    const overflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = overflow;
+    };
+  }, [full]);
 
   return (
     <div className="border border-okvir bg-krem p-2 shadow-otisak sm:p-3">
       <div className="relative aspect-video overflow-hidden bg-espreso">
-        {playing && player.kind === 'iframe' && (
-          <iframe
-            key={player.src}
-            src={player.src}
-            title={urls.length > 1 ? `${lesson.title} — deo ${part + 1}` : lesson.title}
-            allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
-            allowFullScreen
-            // Bez allow-popups: plejer ne može da otvori video u novom tabu (i tako otkrije link)
-            sandbox="allow-scripts allow-same-origin"
-            loading="lazy"
-            className="absolute inset-0 size-full"
-          />
-        )}
-        {playing && player.shield && <span aria-hidden="true" className="absolute top-0 right-0 size-[3.75rem] bg-black" />}
-        {playing && player.kind === 'file' && (
-          <video key={player.src} src={player.src} controls autoPlay playsInline className="absolute inset-0 size-full bg-espreso" />
-        )}
-
-        {!playing && (
-          <>
-            <img src={lesson.thumbnail} alt="" className="absolute inset-0 size-full object-cover object-[50%_30%]" />
-            <div className="absolute inset-0 bg-linear-to-t from-espreso/80 via-espreso/10 to-transparent" />
-
-            {player ? (
-              <button
-                type="button"
-                onClick={() => setStarted(true)}
-                className="group absolute inset-0 grid place-items-center"
-                aria-label={`Pusti lekciju: ${lesson.title}`}
-              >
-                <span className="grid size-16 place-items-center bg-bobica-tamna text-vanila transition duration-300 ease-meko group-hover:bg-espreso sm:size-20">
-                  <Icon.Play width="26" height="26" className="translate-x-0.5" />
-                </span>
-              </button>
-            ) : state === 'locked' ? (
-              // Zaključana lekcija u plejeru otvara prozor za upis i pristupni kod
-              <button
-                type="button"
-                onClick={onLocked}
-                aria-haspopup="dialog"
-                className="group absolute inset-0 grid place-items-center"
-                aria-label={`Otključaj lekciju: ${lesson.title}`}
-              >
-                <span className="grid size-16 place-items-center bg-bobica-tamna text-vanila transition duration-300 ease-meko group-hover:bg-espreso sm:size-20">
-                  <Icon.Lock width="24" height="24" />
-                </span>
-              </button>
-            ) : (
-              <div className="absolute inset-0 grid place-items-center">
-                <span className="grid size-16 place-items-center border border-vanila/55 bg-espreso/25 text-vanila/85 backdrop-blur-[2px] sm:size-20">
-                  <Icon.Play width="26" height="26" className="translate-x-0.5" />
-                </span>
-              </div>
-            )}
-
-            <div className="absolute inset-x-0 bottom-0 flex flex-wrap items-end justify-between gap-3 p-4 text-vanila sm:p-7">
-              <p className="font-display text-[clamp(1.3rem,0.95rem+1.1vw,1.9rem)] leading-tight max-sm:hidden">{lesson.title}</p>
-              {state !== 'playable' && (
-                <Tag tone="dark" className="max-sm:ml-auto">
-                  {state === 'soon' ? 'Video stiže uskoro' : 'Zaključano'}
-                </Tag>
+        <div
+          ref={stageRef}
+          className={`overflow-hidden ${full ? 'fixed inset-0 z-[60] bg-black' : 'absolute inset-0'}`}
+          style={{ containerType: 'size' }}
+          role={full ? 'dialog' : undefined}
+          aria-modal={full ? 'true' : undefined}
+          aria-label={full ? lesson.title : undefined}
+        >
+          {full && (
+            <button
+              type="button"
+              onClick={exitFull}
+              aria-label="Zatvori prikaz preko celog ekrana"
+              className="absolute top-3 left-3 z-10 grid size-11 place-items-center bg-black/60 text-vanila transition hover:bg-black/85"
+            >
+              <Icon.Close />
+            </button>
+          )}
+          {full && playing && (
+            <button
+              type="button"
+              onClick={() => setFill((v) => !v)}
+              className="absolute top-3 left-[3.75rem] z-10 h-11 bg-black/60 px-3.5 text-[0.8rem] font-semibold text-vanila transition hover:bg-black/85"
+            >
+              {fill ? 'Prikaži ceo kadar' : 'Popuni ekran'}
+            </button>
+          )}
+          {playing && player.kind === 'iframe' && (
+            // Plejer (Drive, YouTube…) sam ostavlja crne trake oko snimka. Zato mu okvir dobija oblik snimka
+            // i toliko je veći od ekrana da ga popuni; višak se odseca (overflow), bez skaliranja slike.
+            <div
+              className={cover ? 'absolute top-1/2 left-1/2' : 'absolute inset-0'}
+              style={cover ? coverBox : undefined}
+            >
+              <iframe
+                key={player.src}
+                src={player.src}
+                title={urls.length > 1 ? `${lesson.title} — deo ${part + 1}` : lesson.title}
+                allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+                allowFullScreen
+                // Bez allow-popups: plejer ne može da otvori video u novom tabu (i tako otkrije link)
+                sandbox="allow-scripts allow-same-origin"
+                loading="lazy"
+                className="absolute inset-0 size-full"
+              />
+              {player.shield && (
+                <span
+                  aria-hidden="true"
+                  className={`absolute top-0 right-0 size-[3.75rem] ${cover ? 'backdrop-blur-xl' : 'bg-black'}`}
+                />
               )}
             </div>
-          </>
-        )}
+          )}
+          {playing && player.kind === 'file' && (
+            <video
+              key={player.src}
+              src={player.src}
+              controls
+              autoPlay
+              playsInline
+              className={`absolute inset-0 size-full bg-black ${cover ? 'object-cover' : 'object-contain'}`}
+            />
+          )}
+
+          {!playing && (
+            <>
+              <img src={lesson.thumbnail} alt="" className="absolute inset-0 size-full object-cover object-[50%_30%]" />
+              <div className="absolute inset-0 bg-linear-to-t from-espreso/80 via-espreso/10 to-transparent" />
+
+              {player ? (
+                <button
+                  type="button"
+                  onClick={play}
+                  className="group absolute inset-0 grid place-items-center"
+                  aria-label={`Pusti lekciju: ${lesson.title}`}
+                >
+                  <span className="grid size-16 place-items-center bg-bobica-tamna text-vanila transition duration-300 ease-meko group-hover:bg-espreso sm:size-20">
+                    <Icon.Play width="26" height="26" className="translate-x-0.5" />
+                  </span>
+                </button>
+              ) : state === 'locked' ? (
+                // Zaključana lekcija u plejeru otvara prozor za upis i pristupni kod
+                <button
+                  type="button"
+                  onClick={onLocked}
+                  aria-haspopup="dialog"
+                  className="group absolute inset-0 grid place-items-center"
+                  aria-label={`Otključaj lekciju: ${lesson.title}`}
+                >
+                  <span className="grid size-16 place-items-center bg-bobica-tamna text-vanila transition duration-300 ease-meko group-hover:bg-espreso sm:size-20">
+                    <Icon.Lock width="24" height="24" />
+                  </span>
+                </button>
+              ) : (
+                <div className="absolute inset-0 grid place-items-center">
+                  <span className="grid size-16 place-items-center border border-vanila/55 bg-espreso/25 text-vanila/85 backdrop-blur-[2px] sm:size-20">
+                    <Icon.Play width="26" height="26" className="translate-x-0.5" />
+                  </span>
+                </div>
+              )}
+
+              <div className="absolute inset-x-0 bottom-0 flex flex-wrap items-end justify-between gap-3 p-4 text-vanila sm:p-7">
+                <p className="font-display text-[clamp(1.3rem,0.95rem+1.1vw,1.9rem)] leading-tight max-sm:hidden">{lesson.title}</p>
+                {state !== 'playable' && (
+                  <Tag tone="dark" className="max-sm:ml-auto">
+                    {state === 'soon' ? 'Video stiže uskoro' : 'Zaključano'}
+                  </Tag>
+                )}
+              </div>
+            </>
+          )}
+        </div>
       </div>
 
       {urls.length > 1 && (

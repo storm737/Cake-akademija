@@ -16,6 +16,10 @@
 // Podržano: YouTube (watch, youtu.be, shorts, embed), Vimeo, Google Drive
 // (fajl mora biti podeljen sa „Svako ko ima link“) i direktni .mp4/.webm fajlovi.
 //
+// ratio = oblik snimka: širina / visina. Uspravan snimak (snimljen telefonom) je 9 / 16, položen 16 / 9
+// (ako se izostavi, važi 16 / 9). Preko celog ekrana snimak popunjava ekran bez crnih traka
+// samo ako je ratio tačan; pogrešan ratio ostavlja trake.
+//
 // icon = ikona na kartici lekcije (kapa, torta, mutilica, cinija, sastavljanje, dresir,
 // oklagija, spratna, sijalica, link, fotoaparat, radnja); thumbnail = slika u plejeru.
 
@@ -29,6 +33,7 @@ const videos = [
     icon: 'kapa',
     isLocked: true,
     thumbnail: '/assets/maja/portret-1080.webp',
+    ratio: 9 / 16,
     videoUrl: 'https://drive.google.com/file/d/1E-5mqFk17SsGrdzDSJF8um0Jo3Y_yL5p',
   },
   {
@@ -36,6 +41,7 @@ const videos = [
     icon: 'torta',
     isLocked: true,
     thumbnail: thumb('svadbena-gipsofila'),
+    ratio: 9 / 16,
     videoUrl: 'https://drive.google.com/file/d/1D7qX-c0rMH97gwBReDcNhTMhWqZZLNr8/view?usp=drivesdk',
   },
   {
@@ -43,6 +49,7 @@ const videos = [
     icon: 'mutilica',
     isLocked: true,
     thumbnail: thumb('naked-torta-ruze'),
+    ratio: 9 / 16,
     videoUrl: 'https://drive.google.com/file/d/1cm3ZkGbYzXtX6FyvoAko2HBKTpMQ8vdc/view?usp=drivesdk',
   },
   { module: '04', icon: 'cinija', isLocked: true, thumbnail: thumb('cokoladni-volani-ombre'), videoUrl: '' },
