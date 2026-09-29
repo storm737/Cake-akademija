@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { rights } from '../data/content';
 import { introVideo, lessons } from '../data/lessons';
-import { lessonState, toPlayer, videoList } from '../lib/video';
+import { lessonState, toPlayer, videoList, videoParts } from '../lib/video';
 import { useAccess } from '../lib/access';
 import { EnrollButton, UnlockLink } from './Access';
 import LessonIcon, { iconTint } from './LessonIcon';
@@ -139,26 +139,27 @@ function VideoPlayer({ lesson, hasAccess, onLocked }) {
   const [started, setStarted] = useState(false);
   // Puštena lekcija odmah ide preko celog ekrana
   const [full, setFull] = useState(false);
-  // U celom ekranu snimak popunjava ceo ekran (bez crnih traka); dugme dozvoljava prikaz celog kadra
-  const [fill, setFill] = useState(true);
+  // Opciono uvećanje: krajevi kadra se ravnomerno smanjuju, a centar se uvećava (bez agresivnog
+  // sečenja) — korisno na širem ekranu gde inače ostaje dosta zamućenog prostora sa strane
+  const [zoom, setZoom] = useState(false);
   const stageRef = useRef(null);
   const playRef = useRef(null);
   const wasFull = useRef(false);
   const state = lessonState(lesson, hasAccess);
-  const urls = state === 'playable' ? videoList(lesson) : [];
-  const player = urls.length ? toPlayer(urls[Math.min(part, urls.length - 1)]) : null;
+  const parts = state === 'playable' ? videoParts(lesson) : [];
+  const player = parts.length ? toPlayer(parts[Math.min(part, parts.length - 1)].url) : null;
   // Video (i Google Drive) se učitava tek kad se pusti, pa je klik na „Pusti“ i ulaz u ceo ekran
   const playing = Boolean(player) && started;
   // Odnos širine i visine snimka (uspravan 9 / 16, položen 16 / 9); podešava se u lessons.js
   const ratio = lesson.ratio ?? 16 / 9;
-  const cover = full && fill;
-  // Okvir plejera u popunjenom prikazu: oblik snimka, dovoljno velik da prekrije ekran. Višak širine se
-  // odseca uglavnom sa desne strane (do 4rem), gde Drive ima svoje dugme, pa ono ostaje van ekrana.
-  const overX = `max(0px, calc(100cqh * ${ratio} - 100cqw))`;
-  const coverBox = {
-    width: `max(100cqw, calc(100cqh * ${ratio}))`,
-    height: `max(100cqh, calc(100cqw / ${ratio}))`,
-    transform: `translate(calc(-50% + clamp(0px, min(${overX}, 4rem) - ${overX} / 2, ${overX} / 2)), -50%)`,
+  // U celom ekranu se ceo kadar vidi, bez sečenja; prostor oko njega popunjava zamućena naslovna
+  // slika lekcije umesto crnog, pa ekran ne ostaje prazan, a snimak ostaje potpuno vidljiv.
+  const fitBox = {
+    width: `min(100cqw, calc(100cqh * ${ratio}))`,
+    height: `min(100cqh, calc(100cqw / ${ratio}))`,
+    // Uvećanje: 1,25× iz centra, pa ostaje vidljivo ~80% originalnog kadra sa svake strane.
+    // Ono što izađe van ekrana odseca stageRef svojim overflow-hidden.
+    transform: `translate(-50%, -50%)${zoom ? ' scale(1.25)' : ''}`,
   };
 
   const enterFull = () => {
@@ -172,6 +173,7 @@ function VideoPlayer({ lesson, hasAccess, onLocked }) {
   const exitFull = () => {
     setFull(false);
     setStarted(false);
+    setZoom(false);
     if (fsElement()) Promise.resolve(exitFs()).catch(() => {});
     try {
       screen.orientation?.unlock?.();
@@ -248,6 +250,13 @@ function VideoPlayer({ lesson, hasAccess, onLocked }) {
           aria-label={full ? lesson.title : undefined}
         >
           {full && (
+            <div
+              aria-hidden="true"
+              className="absolute inset-0 scale-110 bg-cover bg-center blur-3xl brightness-[0.45]"
+              style={{ backgroundImage: `url(${lesson.thumbnail})` }}
+            />
+          )}
+          {full && (
             <button
               type="button"
               onClick={exitFull}
@@ -260,23 +269,21 @@ function VideoPlayer({ lesson, hasAccess, onLocked }) {
           {full && playing && (
             <button
               type="button"
-              onClick={() => setFill((v) => !v)}
+              onClick={() => setZoom((v) => !v)}
               className="absolute top-3 left-[3.75rem] z-10 h-11 bg-black/60 px-3.5 text-[0.8rem] font-semibold text-vanila transition hover:bg-black/85"
             >
-              {fill ? 'Prikaži ceo kadar' : 'Popuni ekran'}
+              {zoom ? 'Prikaži ceo kadar' : 'Uvećaj'}
             </button>
           )}
           {playing && player.kind === 'iframe' && (
-            // Plejer (Drive, YouTube…) sam ostavlja crne trake oko snimka. Zato mu okvir dobija oblik snimka
-            // i toliko je veći od ekrana da ga popuni; višak se odseca (overflow), bez skaliranja slike.
-            <div
-              className={cover ? 'absolute top-1/2 left-1/2' : 'absolute inset-0'}
-              style={cover ? coverBox : undefined}
-            >
+            // Ceo kadar snimka je podrazumevano vidljiv (bez sečenja); okvir dobija tačan oblik
+            // snimka i staje unutar ekrana, centriran preko zamućene pozadine iznad. Uz „Uvećaj“
+            // se blago zumira iz centra (vidi fitBox), a višak odseca overflow-hidden na stageRef.
+            <div className="absolute top-1/2 left-1/2" style={fitBox}>
               <iframe
                 key={player.src}
                 src={player.src}
-                title={urls.length > 1 ? `${lesson.title} — deo ${part + 1}` : lesson.title}
+                title={parts.length > 1 ? `${lesson.title} — ${parts[Math.min(part, parts.length - 1)].label}` : lesson.title}
                 allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
                 allowFullScreen
                 // Bez allow-popups: plejer ne može da otvori video u novom tabu (i tako otkrije link)
@@ -284,23 +291,13 @@ function VideoPlayer({ lesson, hasAccess, onLocked }) {
                 loading="lazy"
                 className="absolute inset-0 size-full"
               />
-              {player.shield && (
-                <span
-                  aria-hidden="true"
-                  className={`absolute top-0 right-0 size-[3.75rem] ${cover ? 'backdrop-blur-xl' : 'bg-black'}`}
-                />
-              )}
+              {player.shield && <span aria-hidden="true" className="absolute top-0 right-0 size-[3.75rem] bg-black" />}
             </div>
           )}
           {playing && player.kind === 'file' && (
-            <video
-              key={player.src}
-              src={player.src}
-              controls
-              autoPlay
-              playsInline
-              className={`absolute inset-0 size-full bg-black ${cover ? 'object-cover' : 'object-contain'}`}
-            />
+            <div className="absolute top-1/2 left-1/2" style={fitBox}>
+              <video key={player.src} src={player.src} controls autoPlay playsInline className="absolute inset-0 size-full bg-black" />
+            </div>
           )}
 
           {!playing && (
@@ -354,14 +351,14 @@ function VideoPlayer({ lesson, hasAccess, onLocked }) {
         </div>
       </div>
 
-      {urls.length > 1 && (
+      {parts.length > 1 && (
         <div role="group" aria-label="Delovi lekcije" className="flex flex-wrap items-center gap-2 px-1 pt-3 sm:px-0">
           <span className="mr-1 text-[0.72rem] font-semibold tracking-[0.16em] text-karamel-tamni uppercase">
-            Lekcija ima {urls.length} dela
+            Lekcija ima {parts.length} dela
           </span>
-          {urls.map((url, i) => (
+          {parts.map((p, i) => (
             <button
-              key={url}
+              key={p.url}
               type="button"
               aria-pressed={part === i}
               onClick={() => choosePart(i)}
@@ -369,7 +366,7 @@ function VideoPlayer({ lesson, hasAccess, onLocked }) {
                 part === i ? 'border-bobica-tamna bg-bobica-tamna text-vanila' : 'border-okvir text-espreso hover:border-bobica/60'
               }`}
             >
-              Deo {i + 1}
+              {p.label}
             </button>
           ))}
         </div>

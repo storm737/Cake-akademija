@@ -8,7 +8,16 @@
 // Pre objavljivanja zameni privremeni kod nasumičnim kodovima.
 
 export const VALID_ACCESS_KEYS = [
-  '11111', // privremeni kod za probu
+  'TORTA2T5A',
+  'TORTAM9NJ',
+  'TORTAAXN9',
+  'TORTAC87X',
+  'TORTA2FJD',
+  'TORTAM89C',
+  'TORTATFQ4',
+  'TORTAQKW9',
+  'TORTAW4RX',
+  'TORTAYY5D',
 ];
 
 // Instagram nalog na koji se šalje poruka za upis i uplatu

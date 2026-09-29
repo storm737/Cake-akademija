@@ -11,8 +11,9 @@
 //  • videoUrl prazan             → otključana lekcija prikazuje najavu „Video stiže uskoro“
 //
 // Za dodavanje videa dovoljno je upisati link u videoUrl — plejer se sam uključuje.
-// Lekcija iz više delova: upiši listu linkova, npr. videoUrl: ['link 1', 'link 2'] —
-// ispod plejera se pojavljuju dugmad „Deo 1“, „Deo 2“…
+// Lekcija iz više delova: upiši listu linkova, npr. videoUrl: ['link 1', 'link 2'] — ispod
+// plejera se pojavljuju dugmad „Deo 1“, „Deo 2“… Za sopstveni naziv dela upiši { url, label }
+// umesto samog linka, npr. videoUrl: [{ url: 'link 1', label: 'Čokoladni biskvit' }, 'link 2'].
 // Podržano: YouTube (watch, youtu.be, shorts, embed), Vimeo, Google Drive
 // (fajl mora biti podeljen sa „Svako ko ima link“) i direktni .mp4/.webm fajlovi.
 //
@@ -34,7 +35,7 @@ const videos = [
     isLocked: true,
     thumbnail: '/assets/maja/portret-1080.webp',
     ratio: 9 / 16,
-    videoUrl: 'https://drive.google.com/file/d/1E-5mqFk17SsGrdzDSJF8um0Jo3Y_yL5p',
+    videoUrl: 'https://youtu.be/lIBjLp79SqM',
   },
   {
     module: '02',
@@ -42,7 +43,7 @@ const videos = [
     isLocked: true,
     thumbnail: thumb('svadbena-gipsofila'),
     ratio: 9 / 16,
-    videoUrl: 'https://drive.google.com/file/d/1D7qX-c0rMH97gwBReDcNhTMhWqZZLNr8/view?usp=drivesdk',
+    videoUrl: 'https://youtu.be/k0J7NShayv8',
   },
   {
     module: '03',
@@ -50,9 +51,23 @@ const videos = [
     isLocked: true,
     thumbnail: thumb('naked-torta-ruze'),
     ratio: 9 / 16,
-    videoUrl: 'https://drive.google.com/file/d/1cm3ZkGbYzXtX6FyvoAko2HBKTpMQ8vdc/view?usp=drivesdk',
+    videoUrl: [
+      { url: 'https://youtu.be/GjqYD9Ph0Sw', label: 'Čokoladni biskvit' },
+      { url: 'https://youtu.be/nkTzfEtas0Q', label: 'Kore od belanaca' },
+      { url: 'https://youtu.be/0JpEBWLoHps', label: 'Šuškave sušene kore' },
+    ],
   },
-  { module: '04', icon: 'cinija', isLocked: true, thumbnail: thumb('cokoladni-volani-ombre'), videoUrl: '' },
+  {
+    module: '04',
+    icon: 'cinija',
+    isLocked: true,
+    thumbnail: thumb('cokoladni-volani-ombre'),
+    ratio: 9 / 16,
+    videoUrl: [
+      { url: 'https://youtu.be/SCcEjmK-0AU', label: 'Čokoladni fil' },
+      { url: 'https://youtu.be/INGmcZi7yho', label: 'Žuti fil' },
+    ],
+  },
   { module: '05', icon: 'sastavljanje', isLocked: true, thumbnail: thumb('torta-knjiga-ruze'), videoUrl: '' },
   { module: '06', icon: 'dresir', isLocked: true, thumbnail: thumb('bozuri-zlatni-listici'), videoUrl: '' },
   { module: '07', icon: 'oklagija', isLocked: true, thumbnail: thumb('torta-zamak'), videoUrl: '' },

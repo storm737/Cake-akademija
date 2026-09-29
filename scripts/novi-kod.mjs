@@ -7,4 +7,4 @@ const ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 const block = () => Array.from({ length: 4 }, () => ALPHABET[randomInt(ALPHABET.length)]).join('');
 
 const count = Math.max(1, Math.min(50, Number(process.argv[2]) || 1));
-for (let i = 0; i < count; i++) console.log(`TORTA-${block()}-${block()}`);
+for (let i = 0; i < count; i++) console.log(`TORTA${block()}`);

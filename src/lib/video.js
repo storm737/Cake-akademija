@@ -1,8 +1,17 @@
-// videoUrl u lessons.js može biti jedan link ili lista linkova (lekcija iz više delova)
-export function videoList(lesson) {
+// videoUrl u lessons.js može biti: jedan link; lista linkova (lekcija iz više delova, dugmad
+// dobijaju naziv „Deo 1“, „Deo 2“…); ili lista { url, label } kada delovi imaju sopstvene nazive
+// (npr. { url: '...', label: 'Čokoladni biskvit' }) — tada dugme nosi taj naziv.
+export function videoParts(lesson) {
   const value = lesson.videoUrl;
-  if (Array.isArray(value)) return value.filter(Boolean);
-  return value ? [value] : [];
+  const list = Array.isArray(value) ? value : value ? [value] : [];
+  return list
+    .filter(Boolean)
+    .map((item, i) => (typeof item === 'string' ? { url: item, label: `Deo ${i + 1}` } : { url: item.url, label: item.label || `Deo ${i + 1}` }))
+    .filter((p) => p.url);
+}
+
+export function videoList(lesson) {
+  return videoParts(lesson).map((p) => p.url);
 }
 
 // Stanje lekcije određuju podaci iz lessons.js i pristupni kod — raspored se ne menja.
