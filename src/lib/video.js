@@ -20,10 +20,30 @@ export function lessonState(lesson, hasAccess = false) {
   return videoList(lesson).length ? 'playable' : 'soon';
 }
 
-const youtube = (id) => ({
-  kind: 'iframe',
-  src: `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0&modestbranding=1`,
-});
+// YouTube se pušta preko IFrame API-ja (ne kao običan <iframe>), da bismo prekrili njegov plejer
+// sopstvenim dugmićima — sprečava da se do pravog linka dođe preko YouTube-ovog menija (desni klik
+// / dugo pritiskanje: „Kopiraj link videa“). Vidi YouTubePlayer u Lessons.jsx.
+const youtube = (id) => ({ kind: 'youtube', id });
+
+let ytApiPromise;
+// Učitava YouTube IFrame API jednom (deli ga sve lekcije na strani) i vraća Promise koji se
+// razrešava kad je window.YT.Player spreman za upotrebu.
+export function loadYouTubeApi() {
+  if (typeof window === 'undefined') return Promise.reject(new Error('nema window'));
+  if (window.YT?.Player) return Promise.resolve(window.YT);
+  if (ytApiPromise) return ytApiPromise;
+  ytApiPromise = new Promise((resolve) => {
+    const prethodni = window.onYouTubeIframeAPIReady;
+    window.onYouTubeIframeAPIReady = () => {
+      prethodni?.();
+      resolve(window.YT);
+    };
+    const script = document.createElement('script');
+    script.src = 'https://www.youtube.com/iframe_api';
+    document.head.appendChild(script);
+  });
+  return ytApiPromise;
+}
 
 // Google Drive ne podržava automatsko puštanje: posle našeg „Pusti“ korisnik dodirne i njegovo dugme.
 // shield: Drive u uglu plejera ima dugme „otvori u novom prozoru“ koje otkriva link videa, pa se prekriva.

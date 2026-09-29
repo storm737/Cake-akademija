@@ -17,6 +17,12 @@ export const Icon = {
       <path d="M7 4.8v10.4a.8.8 0 0 0 1.2.7l8.3-5.2a.8.8 0 0 0 0-1.4L8.2 4.1A.8.8 0 0 0 7 4.8Z" fill="currentColor" />
     </svg>
   ),
+  Pause: (p) => (
+    <svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true" {...p}>
+      <rect x="5.5" y="4.5" width="3.2" height="11" rx="0.8" fill="currentColor" />
+      <rect x="11.3" y="4.5" width="3.2" height="11" rx="0.8" fill="currentColor" />
+    </svg>
+  ),
   Check: (p) => (
     <svg viewBox="0 0 20 20" width="16" height="16" {...base} strokeWidth={1.8} {...p}>
       <path d="m4.5 10.5 3.4 3.2L15.5 6" />

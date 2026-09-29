@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { rights } from '../data/content';
 import { introVideo, lessons } from '../data/lessons';
-import { lessonState, toPlayer, videoList, videoParts } from '../lib/video';
+import { lessonState, loadYouTubeApi, toPlayer, videoList, videoParts } from '../lib/video';
 import { useAccess } from '../lib/access';
 import { EnrollButton, UnlockLink } from './Access';
 import LessonIcon, { iconTint } from './LessonIcon';
@@ -133,6 +133,178 @@ export default function Lessons() {
 const fsElement = () => document.fullscreenElement || document.webkitFullscreenElement || null;
 const requestFs = (el) => (el?.requestFullscreen || el?.webkitRequestFullscreen)?.call(el);
 const exitFs = () => (document.exitFullscreen || document.webkitExitFullscreen)?.call(document);
+
+// m:ss (ili h:mm:ss za snimke duže od sat vremena)
+const formatTime = (s) => {
+  if (!Number.isFinite(s) || s < 0) s = 0;
+  s = Math.floor(s);
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = String(s % 60).padStart(2, '0');
+  return h ? `${h}:${String(m).padStart(2, '0')}:${sec}` : `${m}:${sec}`;
+};
+
+// YouTube se pušta preko njihovog IFrame API-ja, potpuno prekriven providnim slojem (pointer-events
+// isključen na njihovom iframe-u) i sopstvenim dugmićima. Tako nijedan dodir ne stiže do YouTube-ovog
+// plejera, pa se ne može desnim klikom/dugim pritiskanjem doći do menija „Kopiraj link videa“.
+function YouTubePlayer({ id, title }) {
+  const hostRef = useRef(null);
+  const playerRef = useRef(null);
+  const seekingRef = useRef(false);
+  const [ready, setReady] = useState(false);
+  const [playingState, setPlayingState] = useState(false);
+  const [duration, setDuration] = useState(0);
+  const [current, setCurrent] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    let player;
+    loadYouTubeApi().then((YT) => {
+      if (cancelled || !hostRef.current) return;
+      player = new YT.Player(hostRef.current, {
+        videoId: id,
+        host: 'https://www.youtube-nocookie.com',
+        // Bez ovoga YT.Player pravi iframe na podrazumevanoj veličini 640×360 px umesto da
+        // ispuni okvir; width/height kao „100%“ postaju HTML atributi na iframe-u.
+        width: '100%',
+        height: '100%',
+        playerVars: {
+          autoplay: 1,
+          controls: 0,
+          rel: 0,
+          modestbranding: 1,
+          playsinline: 1,
+          disablekb: 1,
+          fs: 0,
+          iv_load_policy: 3,
+        },
+        events: {
+          onReady: () => {
+            if (cancelled) return;
+            playerRef.current = player;
+            // width/height u postavkama iznad ne stižu uvek do svih ivica; iframe se dodatno
+            // razvlači na ceo prostor direktno, da snimak sigurno ispuni okvir bez praznina.
+            const el = player.getIframe();
+            if (el) Object.assign(el.style, { position: 'absolute', inset: '0', width: '100%', height: '100%' });
+            setReady(true);
+            setDuration(player.getDuration() || 0);
+          },
+          onStateChange: (e) => {
+            if (cancelled) return;
+            const playingNow = e.data === window.YT.PlayerState.PLAYING;
+            setPlayingState(playingNow);
+            if (playingNow) setDuration(player.getDuration() || 0);
+          },
+        },
+      });
+    });
+    return () => {
+      cancelled = true;
+      try {
+        player?.destroy?.();
+      } catch {
+        /* plejer je već uklonjen zajedno sa stranicom */
+      }
+    };
+  }, [id]);
+
+  // YT API nema „timeupdate“ događaj — dok se pušta, tok se povremeno očita
+  useEffect(() => {
+    if (!playingState) return undefined;
+    const t = setInterval(() => {
+      if (!seekingRef.current) setCurrent(playerRef.current?.getCurrentTime() ?? 0);
+    }, 250);
+    return () => clearInterval(t);
+  }, [playingState]);
+
+  const toggle = () => {
+    const p = playerRef.current;
+    if (!p) return;
+    if (playingState) p.pauseVideo();
+    else p.playVideo();
+  };
+
+  const seek = (e) => {
+    const v = Number(e.target.value);
+    setCurrent(v);
+    playerRef.current?.seekTo(v, true);
+  };
+
+  return (
+    <div className="absolute inset-0 bg-black">
+      {/* Ovde YouTube ubacuje svoj iframe; pointer-events-none ga potpuno isključuje iz interakcije */}
+      <div ref={hostRef} className="pointer-events-none absolute inset-0" />
+
+      <button
+        type="button"
+        onClick={toggle}
+        onContextMenu={(e) => e.preventDefault()}
+        aria-label={`${playingState ? 'Pauziraj' : 'Pusti'} lekciju: ${title}`}
+        className="absolute inset-0 [-webkit-touch-callout:none] select-none"
+      />
+
+      {ready && (
+        <div className="absolute inset-x-0 bottom-0 flex items-center gap-3 bg-linear-to-t from-black/80 to-transparent p-3 sm:p-4">
+          <button type="button" onClick={toggle} aria-label={playingState ? 'Pauziraj' : 'Pusti'} className="grid size-9 shrink-0 place-items-center text-vanila">
+            {playingState ? <Icon.Pause width="18" height="18" /> : <Icon.Play width="18" height="18" className="translate-x-0.5" />}
+          </button>
+          <span className="shrink-0 text-[0.72rem] tabular-nums text-vanila/90">{formatTime(current)}</span>
+          <input
+            type="range"
+            min={0}
+            max={duration || 0}
+            step={0.1}
+            value={Math.min(current, duration || 0)}
+            onChange={seek}
+            onPointerDown={() => {
+              seekingRef.current = true;
+            }}
+            onPointerUp={() => {
+              seekingRef.current = false;
+            }}
+            aria-label="Premotaj video"
+            className="h-1.5 min-w-0 flex-1 accent-bobica"
+          />
+          <span className="shrink-0 text-[0.72rem] tabular-nums text-vanila/90">{formatTime(duration)}</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Vodeni žig: povremeno se pojavi preko snimka, na nasumičnoj poziciji, pa se sam sakrije.
+// Ne prati konkretnu osobu (kod nije lično vezan za polaznicu) — cilj je da otežava neovlašćeno
+// deljenje snimljenog ekrana i da jasno pokaže čiji je sadržaj, ne da nekog identifikuje.
+function Watermark({ text = 'Zabranjeno kopiranje, umnožavanje' }) {
+  const [pos, setPos] = useState(null);
+
+  useEffect(() => {
+    let hideTimer;
+    // Nasumična pozicija unutar sredine kadra, dalje od dugmića u uglu i od kontrolne trake na dnu
+    const show = () => {
+      setPos({ top: `${12 + Math.random() * 62}%`, left: `${8 + Math.random() * 68}%` });
+      hideTimer = setTimeout(() => setPos(null), 4500);
+    };
+    const first = setTimeout(show, 6000);
+    const every = setInterval(show, 26000);
+    return () => {
+      clearTimeout(first);
+      clearTimeout(hideTimer);
+      clearInterval(every);
+    };
+  }, []);
+
+  if (!pos) return null;
+  return (
+    <span
+      aria-hidden="true"
+      style={pos}
+      className="pointer-events-none absolute z-10 rounded-sm bg-espreso/40 px-2.5 py-1 text-[0.72rem] font-semibold tracking-wide text-vanila/90 backdrop-blur-[1px]"
+    >
+      {text}
+    </span>
+  );
+}
 
 function VideoPlayer({ lesson, hasAccess, onLocked }) {
   const [part, setPart] = useState(0);
@@ -275,6 +447,16 @@ function VideoPlayer({ lesson, hasAccess, onLocked }) {
               {zoom ? 'Prikaži ceo kadar' : 'Uvećaj'}
             </button>
           )}
+          {playing && player.kind === 'youtube' && (
+            <div className="absolute top-1/2 left-1/2" style={fitBox}>
+              <YouTubePlayer
+                key={player.id}
+                id={player.id}
+                title={parts.length > 1 ? `${lesson.title} — ${parts[Math.min(part, parts.length - 1)].label}` : lesson.title}
+              />
+              {full && <Watermark />}
+            </div>
+          )}
           {playing && player.kind === 'iframe' && (
             // Ceo kadar snimka je podrazumevano vidljiv (bez sečenja); okvir dobija tačan oblik
             // snimka i staje unutar ekrana, centriran preko zamućene pozadine iznad. Uz „Uvećaj“
@@ -292,11 +474,13 @@ function VideoPlayer({ lesson, hasAccess, onLocked }) {
                 className="absolute inset-0 size-full"
               />
               {player.shield && <span aria-hidden="true" className="absolute top-0 right-0 size-[3.75rem] bg-black" />}
+              {full && <Watermark />}
             </div>
           )}
           {playing && player.kind === 'file' && (
             <div className="absolute top-1/2 left-1/2" style={fitBox}>
               <video key={player.src} src={player.src} controls autoPlay playsInline className="absolute inset-0 size-full bg-black" />
+              {full && <Watermark />}
             </div>
           )}
 
