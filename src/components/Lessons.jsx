@@ -152,6 +152,16 @@ function YouTubePlayer({ id, title }) {
   const playerRef = useRef(null);
   const seekingRef = useRef(false);
   const [ready, setReady] = useState(false);
+  // Ako API skriptu blokira ad-block/privatnost dodatak u pregledaču, ili neka mreža (škola,
+  // posao) blokira youtube.com, ili je konkretan snimak nedostupan — sopstveni plejer se nikad ne
+  // napravi. Bez ovoga korisnik ostane na praznom crnom ekranu zauvek, bez ijedne poruke. Zato se
+  // tad prelazi na običan YouTube prikaz (isti kao za Google Drive/Vimeo) — video se vidi, samo
+  // bez našeg prekrivanja za tog posetioca. Ali ovo mora da bude redak izuzetak, ne uobičajen
+  // slučaj: ako bi se aktiviralo i kod običnog sporijeg interneta, zaštita bi nestajala uzalud.
+  // Zato je pravi okidač brzo i pouzdano odbijanje Promise-a (skripta STVARNO nije stigla — vidi
+  // loadYouTubeApi), a dugi tajmer ispod je samo krajnja rezerva za slučaj da API učita skriptu ali
+  // nikad ne pozove „ready“ (retko, ali moguće) — ne za obično sporo učitavanje.
+  const [failed, setFailed] = useState(false);
   const [playingState, setPlayingState] = useState(false);
   const [duration, setDuration] = useState(0);
   const [current, setCurrent] = useState(0);
@@ -159,47 +169,59 @@ function YouTubePlayer({ id, title }) {
   useEffect(() => {
     let cancelled = false;
     let player;
-    loadYouTubeApi().then((YT) => {
-      if (cancelled || !hostRef.current) return;
-      player = new YT.Player(hostRef.current, {
-        videoId: id,
-        host: 'https://www.youtube-nocookie.com',
-        // Bez ovoga YT.Player pravi iframe na podrazumevanoj veličini 640×360 px umesto da
-        // ispuni okvir; width/height kao „100%“ postaju HTML atributi na iframe-u.
-        width: '100%',
-        height: '100%',
-        playerVars: {
-          autoplay: 1,
-          controls: 0,
-          rel: 0,
-          modestbranding: 1,
-          playsinline: 1,
-          disablekb: 1,
-          fs: 0,
-          iv_load_policy: 3,
-        },
-        events: {
-          onReady: () => {
-            if (cancelled) return;
-            playerRef.current = player;
-            // width/height u postavkama iznad ne stižu uvek do svih ivica; iframe se dodatno
-            // razvlači na ceo prostor direktno, da snimak sigurno ispuni okvir bez praznina.
-            const el = player.getIframe();
-            if (el) Object.assign(el.style, { position: 'absolute', inset: '0', width: '100%', height: '100%' });
-            setReady(true);
-            setDuration(player.getDuration() || 0);
+    const timeout = setTimeout(() => {
+      if (!cancelled) setFailed(true);
+    }, 20000);
+    loadYouTubeApi()
+      .then((YT) => {
+        if (cancelled || !hostRef.current) return;
+        player = new YT.Player(hostRef.current, {
+          videoId: id,
+          host: 'https://www.youtube-nocookie.com',
+          // Bez ovoga YT.Player pravi iframe na podrazumevanoj veličini 640×360 px umesto da
+          // ispuni okvir; width/height kao „100%“ postaju HTML atributi na iframe-u.
+          width: '100%',
+          height: '100%',
+          playerVars: {
+            autoplay: 1,
+            controls: 0,
+            rel: 0,
+            modestbranding: 1,
+            playsinline: 1,
+            disablekb: 1,
+            fs: 0,
+            iv_load_policy: 3,
           },
-          onStateChange: (e) => {
-            if (cancelled) return;
-            const playingNow = e.data === window.YT.PlayerState.PLAYING;
-            setPlayingState(playingNow);
-            if (playingNow) setDuration(player.getDuration() || 0);
+          events: {
+            onReady: () => {
+              if (cancelled) return;
+              clearTimeout(timeout);
+              playerRef.current = player;
+              // width/height u postavkama iznad ne stižu uvek do svih ivica; iframe se dodatno
+              // razvlači na ceo prostor direktno, da snimak sigurno ispuni okvir bez praznina.
+              const el = player.getIframe();
+              if (el) Object.assign(el.style, { position: 'absolute', inset: '0', width: '100%', height: '100%' });
+              setReady(true);
+              setDuration(player.getDuration() || 0);
+            },
+            onStateChange: (e) => {
+              if (cancelled) return;
+              const playingNow = e.data === window.YT.PlayerState.PLAYING;
+              setPlayingState(playingNow);
+              if (playingNow) setDuration(player.getDuration() || 0);
+            },
+            onError: () => {
+              if (!cancelled) setFailed(true);
+            },
           },
-        },
+        });
+      })
+      .catch(() => {
+        if (!cancelled) setFailed(true);
       });
-    });
     return () => {
       cancelled = true;
+      clearTimeout(timeout);
       try {
         player?.destroy?.();
       } catch {
@@ -230,6 +252,21 @@ function YouTubePlayer({ id, title }) {
     playerRef.current?.seekTo(v, true);
   };
 
+  // Rezervni prikaz: obična ugrađena verzija sa YouTube-ovim kontrolama. Nema naše prekrivanje
+  // (taj posetilac privremeno gubi tu zaštitu), ali snimak se bar vidi umesto praznog ekrana.
+  if (failed) {
+    return (
+      <iframe
+        src={`https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0&modestbranding=1`}
+        title={title}
+        allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+        allowFullScreen
+        sandbox="allow-scripts allow-same-origin"
+        className="absolute inset-0 size-full"
+      />
+    );
+  }
+
   return (
     <div className="absolute inset-0 bg-black">
       {/* Ovde YouTube ubacuje svoj iframe; pointer-events-none ga potpuno isključuje iz interakcije */}
@@ -242,6 +279,12 @@ function YouTubePlayer({ id, title }) {
         aria-label={`${playingState ? 'Pauziraj' : 'Pusti'} lekciju: ${title}`}
         className="absolute inset-0 [-webkit-touch-callout:none] select-none"
       />
+
+      {!ready && (
+        <div aria-hidden="true" className="absolute inset-0 grid place-items-center">
+          <span className="size-8 animate-spin rounded-full border-2 border-vanila/30 border-t-vanila" />
+        </div>
+      )}
 
       {ready && (
         <div className="absolute inset-x-0 bottom-0 flex items-center gap-3 bg-linear-to-t from-black/80 to-transparent p-3 sm:p-4">

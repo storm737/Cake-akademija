@@ -27,12 +27,13 @@ const youtube = (id) => ({ kind: 'youtube', id });
 
 let ytApiPromise;
 // Učitava YouTube IFrame API jednom (deli ga sve lekcije na strani) i vraća Promise koji se
-// razrešava kad je window.YT.Player spreman za upotrebu.
+// razrešava kad je window.YT.Player spreman za upotrebu. Odbija (reject) brzo i pouzdano ako
+// skriptu blokira ad-block/mreža — bez ovoga bi se to primetilo tek posle dugog čekanja na tajmer.
 export function loadYouTubeApi() {
   if (typeof window === 'undefined') return Promise.reject(new Error('nema window'));
   if (window.YT?.Player) return Promise.resolve(window.YT);
   if (ytApiPromise) return ytApiPromise;
-  ytApiPromise = new Promise((resolve) => {
+  ytApiPromise = new Promise((resolve, reject) => {
     const prethodni = window.onYouTubeIframeAPIReady;
     window.onYouTubeIframeAPIReady = () => {
       prethodni?.();
@@ -40,6 +41,10 @@ export function loadYouTubeApi() {
     };
     const script = document.createElement('script');
     script.src = 'https://www.youtube.com/iframe_api';
+    script.onerror = () => {
+      ytApiPromise = null; // sledeći pokušaj (drugi video) ne sme da nasledi ovo odbijeno stanje
+      reject(new Error('YouTube API skripta nije uspela da se učita'));
+    };
     document.head.appendChild(script);
   });
   return ytApiPromise;
