@@ -55,6 +55,7 @@ const videos = [
       { url: 'https://youtu.be/GjqYD9Ph0Sw', label: 'Čokoladni biskvit' },
       { url: 'https://youtu.be/nkTzfEtas0Q', label: 'Kore od belanaca' },
       { url: 'https://youtu.be/0JpEBWLoHps', label: 'Šuškave sušene kore' },
+      { url: 'https://youtu.be/LSxF0oZNLRU', label: 'Kore za Anu Pavlovu' },
     ],
   },
   {
@@ -66,6 +67,8 @@ const videos = [
     videoUrl: [
       { url: 'https://youtu.be/SCcEjmK-0AU', label: 'Čokoladni fil' },
       { url: 'https://youtu.be/INGmcZi7yho', label: 'Žuti fil' },
+      { url: 'https://youtu.be/_Cu7pkMjcHg', label: 'Fil od crvenog voća' },
+      { url: 'https://youtu.be/wOxXNJT-Xno', label: 'Fil na pari' },
     ],
   },
   { module: '05', icon: 'sastavljanje', isLocked: true, thumbnail: thumb('torta-knjiga-ruze'), videoUrl: '' },
