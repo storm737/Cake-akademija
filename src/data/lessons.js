@@ -89,6 +89,7 @@ const videos = [
       { url: 'https://youtu.be/m_bl4t4K0rk', label: 'Šlag-priprema i dekoracija' },
       { url: 'https://youtu.be/CsAxSgFSiGA', label: 'Američki buttercream-način pripreme' },
       { url: 'https://youtu.be/hd7J8wyFcmA', label: 'Buterkrem-dekorisanje torte' },
+      { url: 'https://youtu.be/ljbdXYfRxTE', label: 'Wafer dekoracija trakicama' },
     ],
   },
   { module: '07', icon: 'oklagija', isLocked: true, thumbnail: thumb('torta-zamak'), videoUrl: '' },
