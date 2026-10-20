@@ -17,6 +17,10 @@
 // Podržano: YouTube (watch, youtu.be, shorts, embed), Vimeo, Google Drive
 // (fajl mora biti podeljen sa „Svako ko ima link“) i direktni .mp4/.webm fajlovi.
 //
+// materials = PDF materijali uz lekciju: [{ title: 'Naziv', file: '/materijali/naziv.pdf' }] (fajl se
+// stavlja u public/materijali). Prikazuju se u kartici pored plejera samo uz otključan pristup.
+// Lekcija koja ima samo materijale (bez videa) umesto „Video stiže uskoro“ piše „PDF materijali“.
+//
 // ratio = oblik snimka: širina / visina. Uspravan snimak (snimljen telefonom) je 9 / 16, položen 16 / 9
 // (ako se izostavi, važi 16 / 9). Preko celog ekrana snimak popunjava ekran bez crnih traka
 // samo ako je ratio tačan; pogrešan ratio ostavlja trake.
@@ -93,8 +97,25 @@ const videos = [
     ],
   },
   { module: '07', icon: 'oklagija', isLocked: true, thumbnail: thumb('torta-zamak'), videoUrl: '' },
-  { module: '08', icon: 'spratna', isLocked: true, thumbnail: thumb('svadbena-roze-lila'), videoUrl: '' },
-  { module: '09', icon: 'sijalica', isLocked: true, thumbnail: thumb('zlatni-i-crveni-listovi'), videoUrl: '' },
+  {
+    module: '08',
+    icon: 'spratna',
+    isLocked: true,
+    thumbnail: thumb('svadbena-roze-lila'),
+    ratio: 9 / 16,
+    videoUrl: 'https://youtu.be/kU4aOmTeuKI',
+  },
+  {
+    module: '09',
+    icon: 'sijalica',
+    isLocked: true,
+    thumbnail: thumb('zlatni-i-crveni-listovi'),
+    videoUrl: '',
+    materials: [
+      { title: 'Ana Pavlova', file: '/materijali/ana-pavlova-recept.pdf' },
+      { title: 'Čokoladna torta', file: '/materijali/cokoladna-torta-recept.pdf' },
+    ],
+  },
   { module: '10', icon: 'link', isLocked: true, thumbnail: thumb('lavanda-zlatni-obruc'), videoUrl: '' },
   { module: '11', icon: 'fotoaparat', isLocked: true, thumbnail: thumb('karamel-tekstura-pampas'), videoUrl: '' },
   { module: '12', icon: 'radnja', isLocked: true, thumbnail: thumb('spratna-cvetna-torta'), videoUrl: '' },

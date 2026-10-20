@@ -83,6 +83,30 @@ export default function Lessons() {
               </button>
             )}
 
+            {/* PDF materijali se prikazuju samo uz otključan pristup (zaključana lekcija nikad ne otkriva linkove) */}
+            {!isIntro && hasAccess && active.materials?.length > 0 && (
+              <div className="mt-6 border-t border-okvir pt-5">
+                <p className="text-[0.72rem] font-semibold tracking-[0.16em] text-karamel-tamni uppercase">Recepti za preuzimanje</p>
+                <ul className="mt-3 grid gap-2">
+                  {active.materials.map((m) => (
+                    <li key={m.file}>
+                      <a
+                        href={m.file}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="group flex items-center gap-3 border border-okvir bg-vanila/60 px-3.5 py-3 transition-colors hover:border-bobica/60"
+                      >
+                        <Icon.File width="20" height="20" className="shrink-0 text-bobica-tamna" />
+                        <span className="min-w-0 flex-1 font-semibold text-espreso">{m.title}</span>
+                        <span className="text-[0.72rem] font-semibold tracking-[0.16em] text-kakao uppercase">PDF</span>
+                        <span className="sr-only"> — otvara se u novom prozoru</span>
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
             <div className="mt-auto pt-8">
               {hasAccess ? (
                 <p className="flex items-start gap-3 border-t border-okvir pt-6 text-sm text-kakao text-pretty">
@@ -363,6 +387,8 @@ function VideoPlayer({ lesson, hasAccess, onLocked }) {
   const state = lessonState(lesson, hasAccess);
   const parts = state === 'playable' ? videoParts(lesson) : [];
   const player = parts.length ? toPlayer(parts[Math.min(part, parts.length - 1)].url) : null;
+  // Lekcija samo sa PDF materijalima (bez videa): ne piše „Video stiže uskoro“
+  const docOnly = state === 'soon' && Boolean(lesson.materials?.length);
   // Video (i Google Drive) se učitava tek kad se pusti, pa je klik na „Pusti“ i ulaz u ceo ekran
   const playing = Boolean(player) && started;
   // Odnos širine i visine snimka (uspravan 9 / 16, položen 16 / 9); podešava se u lessons.js
@@ -560,7 +586,7 @@ function VideoPlayer({ lesson, hasAccess, onLocked }) {
               ) : (
                 <div className="absolute inset-0 grid place-items-center">
                   <span className="grid size-16 place-items-center border border-vanila/55 bg-espreso/25 text-vanila/85 backdrop-blur-[2px] sm:size-20">
-                    <Icon.Play width="26" height="26" className="translate-x-0.5" />
+                    {docOnly ? <Icon.File width="28" height="28" /> : <Icon.Play width="26" height="26" className="translate-x-0.5" />}
                   </span>
                 </div>
               )}
@@ -569,7 +595,7 @@ function VideoPlayer({ lesson, hasAccess, onLocked }) {
                 <p className="font-display text-[clamp(1.3rem,0.95rem+1.1vw,1.9rem)] leading-tight max-sm:hidden">{lesson.title}</p>
                 {state !== 'playable' && (
                   <Tag tone="dark" className="max-sm:ml-auto">
-                    {state === 'soon' ? 'Video stiže uskoro' : 'Zaključano'}
+                    {docOnly ? 'PDF materijali' : state === 'soon' ? 'Video stiže uskoro' : 'Zaključano'}
                   </Tag>
                 )}
               </div>
@@ -603,7 +629,9 @@ function VideoPlayer({ lesson, hasAccess, onLocked }) {
 }
 
 function LessonCard({ lesson, hasAccess, current, onSelect }) {
-  const locked = lessonState(lesson, hasAccess) === 'locked';
+  const state = lessonState(lesson, hasAccess);
+  const locked = state === 'locked';
+  const docOnly = state === 'soon' && Boolean(lesson.materials?.length);
   return (
     <button
       type="button"
@@ -619,7 +647,7 @@ function LessonCard({ lesson, hasAccess, current, onSelect }) {
           className="size-14 translate-y-2 transition-transform duration-500 ease-meko group-hover:-rotate-3 group-hover:scale-110 sm:size-16"
         />
         <span className={`absolute top-0 left-0 grid size-8 place-items-center text-vanila ${locked ? 'bg-bobica-tamna' : 'bg-zalfija-tamna'}`}>
-          {locked ? <Icon.Lock width="14" height="14" /> : <Icon.Play width="14" height="14" className="translate-x-px" />}
+          {locked ? <Icon.Lock width="14" height="14" /> : docOnly ? <Icon.File width="14" height="14" /> : <Icon.Play width="14" height="14" className="translate-x-px" />}
         </span>
       </span>
       <span className="flex min-w-0 flex-col py-2">
@@ -640,7 +668,7 @@ function LessonCard({ lesson, hasAccess, current, onSelect }) {
         </span>
         <span className="mt-2 font-display text-[1.32rem] leading-[1.18] text-balance">{lesson.title}</span>
         {lesson.description && <span className="mt-2 line-clamp-2 text-sm text-kakao">{lesson.description}</span>}
-        <span className="sr-only">{locked ? ' — zaključana lekcija, otvori detalje' : current ? ' — trenutno u plejeru' : ' — pusti lekciju'}</span>
+        <span className="sr-only">{locked ? ' — zaključana lekcija, otvori detalje' : current ? ' — trenutno u plejeru' : docOnly ? ' — otvori recepte' : ' — pusti lekciju'}</span>
       </span>
     </button>
   );

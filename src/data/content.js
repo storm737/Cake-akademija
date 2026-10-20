@@ -123,7 +123,7 @@ export const modules = [
   },
   {
     number: '09',
-    title: 'Trikovi i saveti',
+    title: 'Recepti, trikovi i saveti',
     body: [],
   },
   {

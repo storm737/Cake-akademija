@@ -61,6 +61,12 @@ export const Icon = {
       <path d="M10 10h7.5M15 10v3M17.5 10v2" />
     </svg>
   ),
+  File: (p) => (
+    <svg viewBox="0 0 20 20" width="18" height="18" {...base} {...p}>
+      <path d="M5.5 2.8h6l3.5 3.5v10.9a.9.9 0 0 1-.9.9H5.5a.9.9 0 0 1-.9-.9V3.7a.9.9 0 0 1 .9-.9Z" />
+      <path d="M11.5 2.8v3.7H15M7.5 10.5h5M7.5 13.5h5" />
+    </svg>
+  ),
   Pin: (p) => (
     <svg viewBox="0 0 20 20" width="18" height="18" {...base} {...p}>
       <path d="M10 17.5s5.5-5 5.5-9.2a5.5 5.5 0 0 0-11 0c0 4.2 5.5 9.2 5.5 9.2Z" />

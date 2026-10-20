@@ -114,7 +114,8 @@ ${faq.map((f) => `      <dt>${esc(f.q)}</dt>\n      <dd>${esc(f.a.join(' '))}</d
   </main>
 </noscript>`;
 
-  const robots = ['User-agent: *', 'Allow: /', ...(base ? ['', `Sitemap: ${abs('/sitemap.xml')}`] : []), ''].join('\n');
+  // /materijali/ = PDF recepti samo za polaznice; ne treba da budu u pretrazi
+  const robots = ['User-agent: *', 'Allow: /', 'Disallow: /materijali/', ...(base ? ['', `Sitemap: ${abs('/sitemap.xml')}`] : []), ''].join('\n');
   const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
