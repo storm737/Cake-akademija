@@ -114,6 +114,9 @@ const videos = [
     materials: [
       { title: 'Ana Pavlova', file: '/materijali/ana-pavlova-recept.pdf' },
       { title: 'Čokoladna torta', file: '/materijali/cokoladna-torta-recept.pdf' },
+      { title: 'Čoko nugat torta', file: '/materijali/coko-nugat-torta-recept.pdf' },
+      { title: 'Plazma torta', file: '/materijali/plazma-torta-recept.pdf' },
+      { title: 'Rafaelo sa malinama', file: '/materijali/rafaelo-sa-malinama-recept.pdf' },
     ],
   },
   { module: '10', icon: 'link', isLocked: true, thumbnail: thumb('lavanda-zlatni-obruc'), videoUrl: '' },
