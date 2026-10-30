@@ -94,6 +94,8 @@ const videos = [
       { url: 'https://youtu.be/CsAxSgFSiGA', label: 'Američki buttercream-način pripreme' },
       { url: 'https://youtu.be/hd7J8wyFcmA', label: 'Buterkrem-dekorisanje torte' },
       { url: 'https://youtu.be/ljbdXYfRxTE', label: 'Wafer dekoracija trakicama' },
+      { url: 'https://youtu.be/-UCViWmaTuY', label: 'Minecraft dekoracija' },
+      { url: 'https://youtu.be/rXPvlQlC6WY', label: 'Dekoracija četvrtaste torte-ganache' },
     ],
   },
   { module: '07', icon: 'oklagija', isLocked: true, thumbnail: thumb('torta-zamak'), videoUrl: '' },
