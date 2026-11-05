@@ -19,6 +19,11 @@ export const VALID_ACCESS_KEYS = [
   'TORTAW4RX',
   'TORTAYY5D',
   '311274',
+  'TORTAHCDS',
+  'TORTAUNGP',
+  'TORTAQ2MD',
+  'TORTA3AQP',
+  'TORTAPGMF',
 ];
 
 // Instagram nalog na koji se šalje poruka za upis i uplatu
