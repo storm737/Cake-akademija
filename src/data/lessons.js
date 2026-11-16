@@ -81,7 +81,11 @@ const videos = [
     isLocked: true,
     thumbnail: thumb('torta-knjiga-ruze'),
     ratio: 9 / 16,
-    videoUrl: 'https://youtu.be/tLqbYJJh4eA',
+    videoUrl: [
+      { url: 'https://youtu.be/tLqbYJJh4eA', label: 'Sklapanje i filovanje Ane Pavlove' },
+      { url: 'https://youtu.be/Qxoz9M8rpT8', label: 'Ferero torta, priprema kreme i filovanje' },
+      { url: 'https://youtu.be/-HSOFdx6j2o', label: 'Beton krema, priprema i nanošenje' },
+    ],
   },
   {
     module: '06',
