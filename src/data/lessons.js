@@ -84,7 +84,6 @@ const videos = [
     videoUrl: [
       { url: 'https://youtu.be/tLqbYJJh4eA', label: 'Sklapanje i filovanje Ane Pavlove' },
       { url: 'https://youtu.be/Qxoz9M8rpT8', label: 'Ferero torta, priprema kreme i filovanje' },
-      { url: 'https://youtu.be/-HSOFdx6j2o', label: 'Beton krema, priprema i nanošenje' },
     ],
   },
   {
@@ -102,7 +101,17 @@ const videos = [
       { url: 'https://youtu.be/rXPvlQlC6WY', label: 'Dekoracija četvrtaste torte-ganache' },
     ],
   },
-  { module: '07', icon: 'oklagija', isLocked: true, thumbnail: thumb('torta-zamak'), videoUrl: '' },
+  {
+    module: '07',
+    icon: 'oklagija',
+    isLocked: true,
+    thumbnail: thumb('torta-zamak'),
+    ratio: 9 / 16,
+    videoUrl: [
+      { url: 'https://youtu.be/jKF3f3WU3Ok', label: 'Fondan, prekrivanje 1. način' },
+      { url: 'https://youtu.be/-HSOFdx6j2o', label: 'Beton krema, priprema i nanošenje' },
+    ],
+  },
   {
     module: '08',
     icon: 'spratna',
