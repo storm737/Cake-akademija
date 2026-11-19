@@ -99,6 +99,7 @@ const videos = [
       { url: 'https://youtu.be/ljbdXYfRxTE', label: 'Wafer dekoracija trakicama' },
       { url: 'https://youtu.be/-UCViWmaTuY', label: 'Minecraft dekoracija' },
       { url: 'https://youtu.be/rXPvlQlC6WY', label: 'Dekoracija četvrtaste torte-ganache' },
+      { url: 'https://youtu.be/tqhHSh1Z5eg', label: 'Čokoladni i zlatni drip' },
     ],
   },
   {
@@ -109,6 +110,7 @@ const videos = [
     ratio: 9 / 16,
     videoUrl: [
       { url: 'https://youtu.be/jKF3f3WU3Ok', label: 'Fondan, prekrivanje 1. način' },
+      { url: 'https://youtu.be/xRYkhQgCQGI', label: 'Fondan, prekrivanje 2. način' },
       { url: 'https://youtu.be/-HSOFdx6j2o', label: 'Beton krema, priprema i nanošenje' },
     ],
   },
@@ -125,13 +127,18 @@ const videos = [
     icon: 'sijalica',
     isLocked: true,
     thumbnail: thumb('zlatni-i-crveni-listovi'),
-    videoUrl: '',
+    ratio: 9 / 16,
+    videoUrl: [
+      { url: 'https://youtu.be/s9w2FLFwfjE', label: 'Zlatni kristali' },
+      { url: 'https://youtu.be/cFJRJMy5Xk0', label: 'Čokoladna glazura' },
+    ],
     materials: [
       { title: 'Ana Pavlova', file: '/materijali/ana-pavlova-recept.pdf' },
       { title: 'Čokoladna torta', file: '/materijali/cokoladna-torta-recept.pdf' },
       { title: 'Čoko nugat torta', file: '/materijali/coko-nugat-torta-recept.pdf' },
       { title: 'Plazma torta', file: '/materijali/plazma-torta-recept.pdf' },
       { title: 'Rafaelo sa malinama', file: '/materijali/rafaelo-sa-malinama-recept.pdf' },
+      { title: 'Čokoladna glazura', file: '/materijali/cokoladna-glazura-recept.pdf' },
     ],
   },
   { module: '10', icon: 'link', isLocked: true, thumbnail: thumb('lavanda-zlatni-obruc'), videoUrl: '' },
